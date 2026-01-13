@@ -5,7 +5,7 @@ __pycache__/
 *.py[cod]
 *.so
 
-
+scripts/phonons/cache.*
 
 .env/
 .venv/
@@ -29,4 +29,8 @@ venv/
 *.pth
 *.npz
 .cache/
+
+# forgot to block the data files. Keep the input files. 
+*.png
+*.traj
 

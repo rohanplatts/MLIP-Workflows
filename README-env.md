@@ -1,24 +1,19 @@
 
-testmace:
+test_mace i on wsl i simply installed with:
 
-environment.intent.yml: TESTMACE, the base environment i created with:
-
-conda create --name testmace python=3.10.19 pip=25.3 -y 
-conda install -y -c pytorch -c nvidia pytorch=2.5.1 pytorch-cuda=12.1
-conda install NumPy SciPy 
-pip install ase
-conda install ipykernel
+conda create --name test_mace python=3.10 pip
 pip install mace-torch
+conda install ipykernel
+
+let pip and conda handle all dependencies.
 
 
-# versions as read: 
-NumPy version: 2.2.6
-SciPy version: 1.15.3
-ASE version: 3.27.0
-mace-torch version: 0.3.14
-mattersim version: 1.2.0
+mattersim_env: 
+conda create --name mattersim_eng python=3.10 pip -y
+pip install orb-models 
+pip install "pynanoflann@git+https://github.com/dwastberg/pynanoflann#egg=af434039ae14bedcbb838a7808924d6689274168"
 
-
+every model is now working
 
 
 

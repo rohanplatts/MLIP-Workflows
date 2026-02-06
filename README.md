@@ -4,8 +4,8 @@ Compute phonons (Phonopy) using a variety of ML interatomic potentials (ASE calc
 
 ## Install
 
+#TODO: WORK ON README
 From the repo root:
-
 ```bash
 python -m pip install -e .
 ```

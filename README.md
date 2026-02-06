@@ -1,6 +1,6 @@
 # mlip-phonons
 
-Compute phonons (Phonopy) using a variety of ML interatomic potentials (ASE calculators), write results/plots, and emit **Plumipy-compatible** files for PL/vibronic workflows. The repo also contains scripts to compare ML phonons vs DFT in a **geometry-change–targeted** way (mode overlaps, frequency-cluster diagnostics, and a final ranking score).
+Compute phonons (Phonopy) using a variety of ML interatomic potentials (ASE calculators), DOS, optionally compute band structure with autofinding bandpath, for Defect supercells or prisitine unit cells, write results/plots, and emit Plumipy-compatible files for PL/vibronic calculations. The repo also contains scripts to compare ML vs DFT coupling modes. 
 
 ## Install
 

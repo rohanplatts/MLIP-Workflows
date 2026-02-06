@@ -1,0 +1,15 @@
+name: matgl_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu121
+      - torch
+      - -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
+      - dgl
+      - matgl
+      - ase
+      - phonopy

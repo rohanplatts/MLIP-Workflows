@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /scratch/user/s4802880/mlip_phonons
+
+models_file="models_index.txt"
+
+python - <<'PY' > "$models_file"
+import yaml
+with open("config.yml") as f:
+    data = yaml.safe_load(f) or {}
+models = data.get("models", {}) or {}
+for name, cfg in models.items():
+    env = (cfg or {}).get("environment")
+    if not env:
+        raise SystemExit(f"Missing environment for {name}")
+    print(f"{name}\t{env}")
+PY
+
+N=$(grep -cve '^[[:space:]]*$' "$models_file")
+(( N > 0 )) || { echo "No models found in config.yml"; exit 1; }
+exec sbatch --array=0-$((N-1))%2 main.sbatch

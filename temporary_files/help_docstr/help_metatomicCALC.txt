@@ -1,0 +1,283 @@
+Help on class MetatomicCalculator in module metatomic.torch.ase_calculator:
+
+class MetatomicCalculator(ase.calculators.calculator.Calculator)
+ |  MetatomicCalculator(model: Union[str, bytes, pathlib.PurePath, metatomic.torch.model.AtomisticModel], *, additional_outputs: Optional[Dict[str, <torch.ScriptClass object at 0x7492cdc70a30>]] = None, extensions_directory=None, check_consistency=False, device=None, variants: Optional[Dict[str, Optional[str]]] = None, non_conservative=False, do_gradients_with_energy=True, uncertainty_threshold=0.1)
+ |  
+ |  The :py:class:`MetatomicCalculator` class implements ASE's
+ |  :py:class:`ase.calculators.calculator.Calculator` API using metatomic
+ |  models to compute energy, forces and any other supported property.
+ |  
+ |  This class can be initialized with any :py:class:`AtomisticModel`, and
+ |  used to run simulations using ASE's MD facilities.
+ |  
+ |  Neighbor lists are computed using the fast
+ |  `vesin <https://luthaf.fr/vesin/latest/index.html>`_ neighbor list library,
+ |  unless the system has mixed periodic and non-periodic boundary conditions (which
+ |  are not yet supported by ``vesin``), in which case the slower ASE neighbor list
+ |  is used.
+ |  
+ |  Method resolution order:
+ |      MetatomicCalculator
+ |      ase.calculators.calculator.Calculator
+ |      ase.calculators.calculator.BaseCalculator
+ |      ase.calculators.abc.GetPropertiesMixin
+ |      abc.ABC
+ |      builtins.object
+ |  
+ |  Methods defined here:
+ |  
+ |  __init__(self, model: Union[str, bytes, pathlib.PurePath, metatomic.torch.model.AtomisticModel], *, additional_outputs: Optional[Dict[str, <torch.ScriptClass object at 0x7492cdc70a30>]] = None, extensions_directory=None, check_consistency=False, device=None, variants: Optional[Dict[str, Optional[str]]] = None, non_conservative=False, do_gradients_with_energy=True, uncertainty_threshold=0.1)
+ |      :param model: model to use for the calculation. This can be a file path, a
+ |          Python instance of :py:class:`AtomisticModel`, or the output of
+ |          :py:func:`torch.jit.script` on :py:class:`AtomisticModel`.
+ |      :param additional_outputs: Dictionary of additional outputs to be computed by
+ |          the model. These outputs will always be computed whenever the
+ |          :py:meth:`calculate` function is called (e.g. by
+ |          :py:meth:`ase.Atoms.get_potential_energy`,
+ |          :py:meth:`ase.optimize.optimize.Dynamics.run`, *etc.*) and stored in the
+ |          :py:attr:`additional_outputs` attribute. If you want more control over when
+ |          and how to compute specific outputs, you should use :py:meth:`run_model`
+ |          instead.
+ |      :param extensions_directory: if the model uses extensions, we will try to load
+ |          them from this directory
+ |      :param check_consistency: should we check the model for consistency when
+ |          running, defaults to False.
+ |      :param device: torch device to use for the calculation. If ``None``, we will try
+ |          the options in the model's ``supported_device`` in order.
+ |      :param variants: dictionary mapping output names to a variant that should be
+ |          used for the calculations (e.g. ``{"energy": "PBE"}``). If ``"energy"`` is
+ |          set to a variant also the uncertainty and non conservative outputs will be
+ |          taken from this variant. This behaviour can be overriden by setting the
+ |          corresponding keys explicitly to ``None`` or to another value (e.g.
+ |          ``{"energy_uncertainty": "r2scan"}``).
+ |      :param non_conservative: if ``True``, the model will be asked to compute
+ |          non-conservative forces and stresses. This can afford a speed-up,
+ |          potentially at the expense of physical correctness (especially in molecular
+ |          dynamics simulations).
+ |      :param do_gradients_with_energy: if ``True``, this calculator will always
+ |          compute the energy gradients (forces and stress) when the energy is
+ |          requested (e.g. through ``atoms.get_potential_energy()``). Because the
+ |          results of a calculation are cached by ASE, this means future calls to
+ |          ``atom.get_forces()`` will return immediately, without needing to execute
+ |          the model again. If you are mainly interested in the energy, you can set
+ |          this to ``False`` and enjoy a faster model. Forces will still be calculated
+ |          if requested with ``atoms.get_forces()``.
+ |      :param uncertainty_threshold: threshold for the atomic energy uncertainty in eV.
+ |          This will only be used if the model supports atomic uncertainty estimation
+ |          (https://pubs.acs.org/doi/full/10.1021/acs.jctc.3c00704). Set this to
+ |          ``None`` to disable uncertainty quantification even if the model supports
+ |          it.
+ |  
+ |  calculate(self, atoms: ase.atoms.Atoms, properties: List[str], system_changes: List[str]) -> None
+ |      Compute some ``properties`` with this calculator, and return them in the format
+ |      expected by ASE.
+ |      
+ |      This is not intended to be called directly by users, but to be an implementation
+ |      detail of ``atoms.get_energy()`` and related functions. See
+ |      :py:meth:`ase.calculators.calculator.Calculator.calculate` for more information.
+ |  
+ |  compute_energy(self, atoms: Union[ase.atoms.Atoms, List[ase.atoms.Atoms]], compute_forces_and_stresses: bool = False, *, per_atom: bool = False) -> Dict[str, Union[float, numpy.ndarray, List[Union[float, numpy.ndarray]]]]
+ |      Compute the energy of the given ``atoms``.
+ |      
+ |      Energies are computed in eV, forces in eV/Å, and stresses in 3x3 tensor format
+ |      and in units of eV/Å^3.
+ |      
+ |      :param atoms: :py:class:`ase.Atoms`, or list of :py:class:`ase.Atoms`, on which
+ |          to run the model
+ |      :param compute_forces_and_stresses: if ``True``, the model will also compute
+ |          forces and stresses. IMPORTANT: stresses will only be computed if all
+ |          provided systems have periodic boundary conditions in all directions.
+ |      :param per_atom: if ``True``, the per-atom energies will also be
+ |          computed.
+ |      :return: A dictionary with the computed properties. The dictionary will contain
+ |          the ``energy`` as a float. If ``compute_forces_and_stresses`` is True,
+ |          the ``forces`` and ``stress`` will also be included as numpy arrays.
+ |          If ``per_atom`` is True, the ``energies`` key will also be present,
+ |          containing the per-atom energies as a numpy array.
+ |          In case of a list of :py:class:`ase.Atoms`, the dictionary values will
+ |          instead be lists of the corresponding properties, in the same format.
+ |  
+ |  metadata(self) -> <torch.ScriptClass object at 0x7492cdc55930>
+ |      Get the metadata of the underlying model
+ |  
+ |  run_model(self, atoms: Union[ase.atoms.Atoms, List[ase.atoms.Atoms]], outputs: Dict[str, <torch.ScriptClass object at 0x7492cdc70a30>], selected_atoms: Optional[<torch.ScriptClass object at 0x7491376154b0>] = None) -> Dict[str, <torch.ScriptClass object at 0x749137377fb0>]
+ |      Run the model on the given ``atoms``, computing the requested ``outputs`` and
+ |      only these.
+ |      
+ |      The output of the model is returned directly, and as such the blocks' ``values``
+ |      will be :py:class:`torch.Tensor`.
+ |      
+ |      This is intended as an easy way to run metatensor models on
+ |      :py:class:`ase.Atoms` when the model can compute outputs not supported by the
+ |      standard ASE's calculator interface.
+ |      
+ |      All the parameters have the same meaning as the corresponding ones in
+ |      :py:meth:`metatomic.torch.ModelInterface.forward`.
+ |      
+ |      :param atoms: :py:class:`ase.Atoms`, or list of :py:class:`ase.Atoms`, on which
+ |          to run the model
+ |      :param outputs: outputs of the model that should be predicted
+ |      :param selected_atoms: subset of atoms on which to run the calculation
+ |  
+ |  todict(self)
+ |      Obtain a dictionary of parameter information
+ |  
+ |  ----------------------------------------------------------------------
+ |  Class methods defined here:
+ |  
+ |  fromdict(data) from abc.ABCMeta
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data and other attributes defined here:
+ |  
+ |  __abstractmethods__ = frozenset()
+ |  
+ |  __annotations__ = {}
+ |  
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from ase.calculators.calculator.Calculator:
+ |  
+ |  band_structure(self)
+ |      Create band-structure object for plotting.
+ |  
+ |  calculate_numerical_forces(self, atoms, d=0.001)
+ |      Calculate numerical forces using finite difference.
+ |      
+ |      All atoms will be displaced by +d and -d in all directions.
+ |      
+ |      .. deprecated:: 3.24.0
+ |  
+ |  calculate_numerical_stress(self, atoms, d=1e-06, voigt=True)
+ |      Calculate numerical stress using finite difference.
+ |      
+ |      .. deprecated:: 3.24.0
+ |  
+ |  check_state(self, atoms, tol=1e-15)
+ |      Check for any system changes since last calculation.
+ |  
+ |  get_atoms(self)
+ |  
+ |  get_default_parameters(self)
+ |  
+ |  read(self, label)
+ |      Read atoms, parameters and calculated properties from output file.
+ |      
+ |      Read result from self.label file.  Raise ReadError if the file
+ |      is not there.  If the file is corrupted or contains an error
+ |      message from the calculation, a ReadError should also be
+ |      raised.  In case of success, these attributes must set:
+ |      
+ |      atoms: Atoms object
+ |          The state of the atoms from last calculation.
+ |      parameters: Parameters object
+ |          The parameter dictionary.
+ |      results: dict
+ |          Calculated properties like energy and forces.
+ |      
+ |      The FileIOCalculator.read() method will typically read atoms
+ |      and parameters and get the results dict by calling the
+ |      read_results() method.
+ |  
+ |  reset(self)
+ |      Clear all information from old calculation.
+ |  
+ |  set(self, **kwargs)
+ |      Set parameters like set(key1=value1, key2=value2, ...).
+ |      
+ |      A dictionary containing the parameters that have been changed
+ |      is returned.
+ |      
+ |      Subclasses must implement a set() method that will look at the
+ |      chaneged parameters and decide if a call to reset() is needed.
+ |      If the changed parameters are harmless, like a change in
+ |      verbosity, then there is no need to call reset().
+ |      
+ |      The special keyword 'parameters' can be used to read
+ |      parameters from a file.
+ |  
+ |  set_label(self, label)
+ |      Set label and convert label to directory and prefix.
+ |      
+ |      Examples:
+ |      
+ |      * label='abc': (directory='.', prefix='abc')
+ |      * label='dir1/abc': (directory='dir1', prefix='abc')
+ |      * label=None: (directory='.', prefix=None)
+ |  
+ |  ----------------------------------------------------------------------
+ |  Class methods inherited from ase.calculators.calculator.Calculator:
+ |  
+ |  read_atoms(restart, **kwargs) from abc.ABCMeta
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from ase.calculators.calculator.Calculator:
+ |  
+ |  directory
+ |  
+ |  label
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data and other attributes inherited from ase.calculators.calculator.Calculator:
+ |  
+ |  default_parameters = {}
+ |  
+ |  discard_results_on_any_change = False
+ |  
+ |  ignored_changes = set()
+ |  
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from ase.calculators.calculator.BaseCalculator:
+ |  
+ |  calculate_properties(self, atoms, properties)
+ |      This method is experimental; currently for internal use.
+ |  
+ |  calculation_required(self, atoms, properties)
+ |  
+ |  export_properties(self)
+ |  
+ |  get_property(self, name, atoms=None, allow_calculation=True)
+ |      Get the named property.
+ |  
+ |  ----------------------------------------------------------------------
+ |  Readonly properties inherited from ase.calculators.calculator.BaseCalculator:
+ |  
+ |  name
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data and other attributes inherited from ase.calculators.calculator.BaseCalculator:
+ |  
+ |  implemented_properties = []
+ |  
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from ase.calculators.abc.GetPropertiesMixin:
+ |  
+ |  get_charges(self, atoms=None)
+ |  
+ |  get_dipole_moment(self, atoms=None)
+ |  
+ |  get_forces(self, atoms=None)
+ |  
+ |  get_magnetic_moment(self, atoms=None)
+ |  
+ |  get_magnetic_moments(self, atoms=None)
+ |      Calculate magnetic moments projected onto atoms.
+ |  
+ |  get_potential_energies(self, atoms=None)
+ |  
+ |  get_potential_energy(self, atoms=None, force_consistent=False)
+ |  
+ |  get_stress(self, atoms=None)
+ |  
+ |  get_stresses(self, atoms=None)
+ |      the calculator should return intensive stresses, i.e., such that
+ |      stresses.sum(axis=0) == stress
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from ase.calculators.abc.GetPropertiesMixin:
+ |  
+ |  __dict__
+ |      dictionary for instance variables (if defined)
+ |  
+ |  __weakref__
+ |      list of weak references to the object (if defined)
+

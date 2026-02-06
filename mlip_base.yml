@@ -1,8 +1,0 @@
-name: mlip_base
-channels:
-  - defaults
-dependencies:
-  - python=3.10.19
-  - pip
-  - ipykernel
-prefix: /home/rnpla/anaconda3/envs/mlip_base

@@ -1,0 +1,226 @@
+
+# ===========================================================
+# Executive parameters
+executive:
+  plots: True
+
+# ===========================================================
+# Path configuration (all paths are relative to this config file unless absolute)
+paths:
+  assets_root: assets
+  structures_root: assets/structures
+
+# ===========================================================
+
+# ===========================================================
+# Model configuration. it is formatted as follows:
+
+#models:
+# <model_name>:
+#   environment: <name of this models environment>
+#   material: <name of material model will analyse. This should be registered in material_config.yml>
+#
+# <model_name> should be the same name as what is checked in get_calc.py.
+
+# ============================================================
+
+models:
+
+  # MACE models
+  small-omat-0:
+    environment: mace_env
+    material: cbvn
+  mace-omat-0-medium:
+    environment: mace_env
+    material: cbvn
+  mace-mpa-0-medium:
+    environment: mace_env
+    material: cbvn
+  mace-matpes-pbe-omat-ft:
+    environment: mace_env
+    material: cbvn
+  mace-matpes-r2scan-omat-ft:
+    environment: mace_env
+    material: cbvn
+
+  # ORB models
+  orb-v3-direct-omat:
+    environment: mace_env
+    material: cbvn
+  orb-d3-sm-v2:
+    environment: mace_env
+    material: cbvn
+  orb-v3-conservative-inf-omat:
+    environment: mace_env
+    material: cbvn
+
+  # PET models 
+  pet-mad-s-v1.1.0:
+    environment: mace_env
+    material: cbvn
+  pet-omad-l-v0.1.0:
+    environment: mace_env
+    material: cbvn
+  pet-omad-s-v1.0.0:
+    environment: mace_env
+    material: cbvn
+  pet-omat-l-v1.0.0:
+    environment: mace_env
+    material: cbvn
+  pet-omat-m-v1.0.0:
+    environment: mace_env
+    material: cbvn
+  pet-omat-xl-v1.0.0:
+    environment: mace_env
+    material: cbvn
+
+  # CHGNet 
+  CHGNet-MatPES-PBE-2025.2.10-2.7M-PES:
+    environment: matgl_env
+    material: cbvn
+  CHGNet-MPtrj-2023.12.1-2.7M-PES:
+    environment: matgl_env
+    material: cbvn
+  CHGNet-MPtrj-2024.2.13-11M-PES:
+    environment: matgl_env
+    material: cbvn
+  CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES:
+    environment: matgl_env
+    material: cbvn
+
+  # M3GNet models
+  M3GNet-ANI-1x-Subset-PES: # exclude this one. it is only for H C N O. not B.
+    environment: matgl_env
+    material: cbvn
+  M3GNet-MatPES-PBE-v2025.1-PES:
+    environment: matgl_env
+    material: cbvn
+  M3GNet-MatPES-r2SCAN-v2025.1-PES:
+    environment: matgl_env
+    material: cbvn
+  M3GNet-MP-2021.2.8-DIRECT-PES:
+    environment: matgl_env
+    material: cbvn
+  M3GNet-MP-2021.2.8-PES:
+    environment: matgl_env
+    material: cbvn
+  
+  # TensorNetDGL models
+  TensorNetDGL-MatPES-PBE-v2025.1-PES:
+    environment: matgl_env
+    material: cbvn
+  TensorNetDGL-MatPES-r2SCAN-v2025.1-PES:
+    environment: matgl_env
+    material: cbvn
+
+  # MatterSim (mattersim_env)
+  mattersim-v1.0.0-1M:
+    environment: mattersim_env
+    material: cbvn
+  mattersim-v1.0.0-5M:
+    environment: mattersim_env
+    material: cbvn
+
+
+# ============================================================
+# Structure configuration
+#
+# Add a new structure by inserting it under a group (pure/defects) and
+# providing the fields used by the phonon workflow.
+#
+# structures:
+#   <group_name>:           # pure or defects
+#     <structure_name>:
+#       unitcell_path: <relative path to POSCAR>
+#       is_file_relaxed: <true|false>
+#       primitive_cell_path: <relative path to primitive POSCAR> # recommended
+#
+#       supercell_matrix: [Nx, Ny, Nz]  # tuple/list; use the target supercell
+#       delta: <float>                  # finite displacement in Angstrom
+#       want_band_structure: <true|false>
+#       kpts: [kx, ky, kz]  # k-point mesh for DOS sampling
+#       npts: <int>         # number of DOS bins
+#       width_ev: <float>   # Gaussian broadening in eV
+# ============================================================
+# NOTE THAT YOU CAN CHANGE THE DATA TYPE WHEN USING HPC. i use float32 bc my laptop small. 
+
+
+# for defects, supply the supercell, for crystals, 
+
+structures:
+  pure:
+    diamond:
+      unitcell_path: diamond_super.poscar
+      is_file_relaxed: true # if it is relaxed then kpoint path accuracy decreases, 
+      # for which it is then recomended to definitely also submit the primitive cell
+      primitive_cell_path: diamond_primitive.poscar
+      
+      supercell_matrix: (3,3,3) 
+      delta: 0.01 # displacement size
+      want_band_structure:  false 
+
+      kpts: [12, 12, 12]
+      npts: 400
+      width_ev: 1e-3
+
+    hbn:
+      unitcell_path: hbn_super.poscar
+      is_file_relaxed: false
+      primitive_cell_path: hbn_primitive.poscar
+
+      supercell_matrix: (2, 2, 1)
+      delta: 0.01
+      want_band_structure: true
+
+      kpts: [12, 12, 12]
+      npts: 400
+      width_ev: 1e-3
+
+  defects:
+    diamond_nv:
+      unitcell_path: diamond_nv.poscar
+      is_file_relaxed: false
+      primtive_cell_path: diamond_primitive.poscar
+
+      supercell_matrix: [1, 1, 1]
+      delta: 0.01
+      
+      npts: 400
+      want_band_structure: True
+
+      kpts: [12, 12, 12]
+      width_ev: 1e-3
+
+    hbn_c2:
+      unitcell_path: hbn_c2.poscar
+      is_file_relaxed: false
+      primitive_cell_path: hbn_primitive.poscar
+
+      supercell_matrix: [1, 1, 1]
+      delta: 0.01
+      want_band_structure: True
+
+      kpts: [12, 12, 12]
+      npts: 400
+      width_ev: 1e-3
+
+    cbvn:
+      unitcell_path: relaxed_/CONTCAR_GS-edit.poscar
+      is_file_relaxed: True
+      primitive_cell_path: hbn_primitive.poscar
+      
+
+      supercell_matrix: [1, 1, 1]
+      delta: 0.01
+      want_band_structure: False  
+
+      kpts: [9, 9, 9]
+      npts: 300
+      width_ev: 1e-3
+
+
+
+  
+
+
+  

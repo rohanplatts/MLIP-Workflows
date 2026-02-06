@@ -1,0 +1,18 @@
+name: mace_env
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+channel_priority: strict
+dependencies:
+  - python=3.10
+  - pip
+  - phonopy
+  - pytorch
+  - pytorch-cuda=12.1
+
+  - pip:
+      - mace-torch
+      - upet
+      - orb-models
+      - pynanoflann @ git+https://github.com/dwastberg/pynanoflann@af434039ae14bedcbb838a7808924d6689274168

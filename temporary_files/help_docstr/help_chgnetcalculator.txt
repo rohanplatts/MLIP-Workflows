@@ -1,0 +1,219 @@
+Help on class CHGNetCalculator in module chgnet.model.dynamics:
+
+class CHGNetCalculator(ase.calculators.calculator.Calculator)
+ |  CHGNetCalculator(model: 'CHGNet | None' = None, *, use_device: 'str | None' = None, check_cuda_mem: 'bool' = False, stress_weight: 'float' = 0.006241509125883258, on_isolated_atoms: "Literal['ignore', 'warn', 'error']" = 'warn', return_site_energies: 'bool' = False, **kwargs) -> 'None'
+ |  
+ |  CHGNet Calculator for ASE applications.
+ |  
+ |  Method resolution order:
+ |      CHGNetCalculator
+ |      ase.calculators.calculator.Calculator
+ |      ase.calculators.calculator.BaseCalculator
+ |      ase.calculators.abc.GetPropertiesMixin
+ |      abc.ABC
+ |      builtins.object
+ |  
+ |  Methods defined here:
+ |  
+ |  __init__(self, model: 'CHGNet | None' = None, *, use_device: 'str | None' = None, check_cuda_mem: 'bool' = False, stress_weight: 'float' = 0.006241509125883258, on_isolated_atoms: "Literal['ignore', 'warn', 'error']" = 'warn', return_site_energies: 'bool' = False, **kwargs) -> 'None'
+ |      Provide a CHGNet instance to calculate various atomic properties using ASE.
+ |      
+ |      Args:
+ |          model (CHGNet): instance of a chgnet model. If set to None,
+ |              the pretrained CHGNet is loaded.
+ |              Default = None
+ |          use_device (str, optional): The device to be used for predictions,
+ |              either "cpu", "cuda", or "mps". If not specified, the default device is
+ |              automatically selected based on the available options.
+ |              Default = None
+ |          check_cuda_mem (bool): Whether to use cuda with most available memory
+ |              Default = False
+ |          stress_weight (float): the conversion factor to convert GPa to eV/A^3.
+ |              Default = 1/160.21
+ |          on_isolated_atoms ('ignore' | 'warn' | 'error'): how to handle Structures
+ |              with isolated atoms.
+ |              Default = 'warn'
+ |          return_site_energies (bool): whether to return the energy of each atom
+ |          **kwargs: Passed to the Calculator parent class.
+ |  
+ |  calculate(self, atoms: 'Atoms | None' = None, properties: 'list | None' = None, system_changes: 'list | None' = None, task: 'PredTask' = 'efsm') -> 'None'
+ |      Calculate various properties of the atoms using CHGNet.
+ |      
+ |      Args:
+ |          atoms (Atoms | None): The atoms object to calculate properties for.
+ |          properties (list | None): The properties to calculate.
+ |              Default is all properties.
+ |          system_changes (list | None): The changes made to the system.
+ |              Default is all changes.
+ |          task (PredTask): The task to perform. One of "e", "ef", "em", "efs", "efsm".
+ |              Default = "efsm"
+ |  
+ |  ----------------------------------------------------------------------
+ |  Class methods defined here:
+ |  
+ |  from_file(path: 'str', use_device: 'str | None' = None, **kwargs) -> 'Self' from abc.ABCMeta
+ |      Load a user's CHGNet model and initialize the Calculator.
+ |  
+ |  ----------------------------------------------------------------------
+ |  Readonly properties defined here:
+ |  
+ |  n_params
+ |      The number of parameters in CHGNet.
+ |  
+ |  version
+ |      The version of CHGNet.
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data and other attributes defined here:
+ |  
+ |  __abstractmethods__ = frozenset()
+ |  
+ |  __annotations__ = {}
+ |  
+ |  implemented_properties = ('energy', 'forces', 'stress', 'magmoms', 'en...
+ |  
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from ase.calculators.calculator.Calculator:
+ |  
+ |  band_structure(self)
+ |      Create band-structure object for plotting.
+ |  
+ |  calculate_numerical_forces(self, atoms, d=0.001)
+ |      Calculate numerical forces using finite difference.
+ |      
+ |      All atoms will be displaced by +d and -d in all directions.
+ |      
+ |      .. deprecated:: 3.24.0
+ |  
+ |  calculate_numerical_stress(self, atoms, d=1e-06, voigt=True)
+ |      Calculate numerical stress using finite difference.
+ |      
+ |      .. deprecated:: 3.24.0
+ |  
+ |  check_state(self, atoms, tol=1e-15)
+ |      Check for any system changes since last calculation.
+ |  
+ |  get_atoms(self)
+ |  
+ |  get_default_parameters(self)
+ |  
+ |  read(self, label)
+ |      Read atoms, parameters and calculated properties from output file.
+ |      
+ |      Read result from self.label file.  Raise ReadError if the file
+ |      is not there.  If the file is corrupted or contains an error
+ |      message from the calculation, a ReadError should also be
+ |      raised.  In case of success, these attributes must set:
+ |      
+ |      atoms: Atoms object
+ |          The state of the atoms from last calculation.
+ |      parameters: Parameters object
+ |          The parameter dictionary.
+ |      results: dict
+ |          Calculated properties like energy and forces.
+ |      
+ |      The FileIOCalculator.read() method will typically read atoms
+ |      and parameters and get the results dict by calling the
+ |      read_results() method.
+ |  
+ |  reset(self)
+ |      Clear all information from old calculation.
+ |  
+ |  set(self, **kwargs)
+ |      Set parameters like set(key1=value1, key2=value2, ...).
+ |      
+ |      A dictionary containing the parameters that have been changed
+ |      is returned.
+ |      
+ |      Subclasses must implement a set() method that will look at the
+ |      chaneged parameters and decide if a call to reset() is needed.
+ |      If the changed parameters are harmless, like a change in
+ |      verbosity, then there is no need to call reset().
+ |      
+ |      The special keyword 'parameters' can be used to read
+ |      parameters from a file.
+ |  
+ |  set_label(self, label)
+ |      Set label and convert label to directory and prefix.
+ |      
+ |      Examples:
+ |      
+ |      * label='abc': (directory='.', prefix='abc')
+ |      * label='dir1/abc': (directory='dir1', prefix='abc')
+ |      * label=None: (directory='.', prefix=None)
+ |  
+ |  todict(self, skip_default=True)
+ |      Obtain a dictionary of parameter information
+ |  
+ |  ----------------------------------------------------------------------
+ |  Class methods inherited from ase.calculators.calculator.Calculator:
+ |  
+ |  read_atoms(restart, **kwargs) from abc.ABCMeta
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from ase.calculators.calculator.Calculator:
+ |  
+ |  directory
+ |  
+ |  label
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data and other attributes inherited from ase.calculators.calculator.Calculator:
+ |  
+ |  default_parameters = {}
+ |  
+ |  discard_results_on_any_change = False
+ |  
+ |  ignored_changes = set()
+ |  
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from ase.calculators.calculator.BaseCalculator:
+ |  
+ |  calculate_properties(self, atoms, properties)
+ |      This method is experimental; currently for internal use.
+ |  
+ |  calculation_required(self, atoms, properties)
+ |  
+ |  export_properties(self)
+ |  
+ |  get_property(self, name, atoms=None, allow_calculation=True)
+ |      Get the named property.
+ |  
+ |  ----------------------------------------------------------------------
+ |  Readonly properties inherited from ase.calculators.calculator.BaseCalculator:
+ |  
+ |  name
+ |  
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from ase.calculators.abc.GetPropertiesMixin:
+ |  
+ |  get_charges(self, atoms=None)
+ |  
+ |  get_dipole_moment(self, atoms=None)
+ |  
+ |  get_forces(self, atoms=None)
+ |  
+ |  get_magnetic_moment(self, atoms=None)
+ |  
+ |  get_magnetic_moments(self, atoms=None)
+ |      Calculate magnetic moments projected onto atoms.
+ |  
+ |  get_potential_energies(self, atoms=None)
+ |  
+ |  get_potential_energy(self, atoms=None, force_consistent=False)
+ |  
+ |  get_stress(self, atoms=None)
+ |  
+ |  get_stresses(self, atoms=None)
+ |      the calculator should return intensive stresses, i.e., such that
+ |      stresses.sum(axis=0) == stress
+ |  
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from ase.calculators.abc.GetPropertiesMixin:
+ |  
+ |  __dict__
+ |      dictionary for instance variables (if defined)
+ |  
+ |  __weakref__
+ |      list of weak references to the object (if defined)
+

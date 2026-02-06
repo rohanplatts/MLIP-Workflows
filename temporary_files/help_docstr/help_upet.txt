@@ -1,0 +1,47 @@
+Help on package upet:
+
+NAME
+    upet
+
+PACKAGE CONTENTS
+    _metadata
+    _models
+    _version
+    calculator
+    explore (package)
+    modules
+    utils
+
+FUNCTIONS
+    get_upet(*, model: str, size: str, version: str = 'latest', checkpoint_path: Optional[str] = None) -> metatomic.torch.model.AtomisticModel
+        Get a metatomic ``AtomisticModel`` for a UPET MLIP.
+        
+        :param model: name of the UPET model.
+        :param size: size of the UPET model.
+        :param version: version of the UPET model.
+        :param checkpoint_path: path to a checkpoint file to load the model from. If
+            provided, the `version` parameter is ignored.
+    
+    save_upet(*, model: str, size: str, version: str = 'latest', checkpoint_path: Optional[str] = None, output=None)
+        Save the UPET model to a TorchScript file (``pet-xxx.pt``). These files can
+        be used with LAMMPS and other tools to run simulations without Python.
+        
+        :param model: name of the UPET model.
+        :param size: size of the UPET model.
+        :param version: UPET version to use. Defaults to the latest stable version.
+        :param checkpoint_path: path to a checkpoint file to load the model from. If
+            provided, the `version` parameter is ignored.
+        :param output: path to use for the output model, defaults to
+            ``pet-{version}.pt`` when using a version, or the checkpoint path when using
+            a checkpoint.
+
+DATA
+    __all__ = ['get_upet', 'save_upet']
+
+VERSION
+    0.1.1
+
+FILE
+    /home/rnpla/anaconda3/envs/mace_env/lib/python3.10/site-packages/upet/__init__.py
+
+

@@ -34,10 +34,12 @@ venv/
 assets/models/**
 results/**
 
-# Forgot to let it ignore the structures: (am leaving the 'assets/structures' folder since i want this backed up for now)
-input_structure/*
+# Forgot to let it ignore the structures:
+assets/models/structures/**
 
 # forgot to block the data files. Keep the input files. 
 *.png
 *.traj
 *.json
+
+

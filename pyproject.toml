@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=67", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mlip-phonons"
+version = "0.1.0"
+description = "Phonon workflow with MLIP calculators"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "ase",
+  "numpy",
+  "pyyaml",
+  "phonopy",
+  "matplotlib",
+  "torch",
+]
+
+[project.optional-dependencies]
+mace = ["mace-torch"]         
+mattersim = ["mattersim"]
+orb = ["orb-models", "pynanoflann@git+https://github.com/dwastberg/pynanoflann#egg=af434039ae14bedcbb838a7808924d6689274168"]
+pet = ["upet"]
+matgl = ["matgl", "dgl"]
+
+[project.scripts]
+mlip-phonons = "mlip_phonons.main:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["mlip_phonons", "mlip_phonons.tools"]
+include-package-data = true

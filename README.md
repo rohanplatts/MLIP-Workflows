@@ -162,39 +162,6 @@ Above we are installing the package into the active environment.
 
 If you plan to run NEB with `include_vdw: true`, prefer using `conda env create -f env/mace_env.yml` (or other env YAMLs) so `dftd3-python` and `simple-dftd3` come from conda-forge. (Pip does not have them)
 
-Install optional extras as needed:
-
-```bash
-python -m pip install -e '.[mace]'
-python -m pip install -e '.[mattersim]'
-python -m pip install -e '.[matgl]'
-python -m pip install -e '.[pet]'
-python -m pip install -e '.[orb]'
-```
-
----
-
-#### 5. If editable install fails
-
-If `pip install -e ...` fails for the MACE setup, delete the corrupted environment and use the backup Conda environment file (mace example):
-
-```bash
-conda remove --name mace_env --all
-conda env create -f env/mace_env.yml
-conda activate mace_env
-```
-
-Then install the package itself from the repo root:
-
-```bash
-python -m pip install -e .
-```
-
-Also check:
-
-* `env/ENVIRONMENTS.md`
-* `env/mace_env.yml`
-
 ---
 
 #### 6. Daily environment activation on HPC
@@ -214,18 +181,9 @@ export MKL_NUM_THREADS= <NUMBER OF CORES>
 export OPENBLAS_NUM_THREADS= <NUMBER OF CORES>
 ```
 
-If you are using `venv`, a typical daily setup looks like:
-
-```bash
-module purge
-module load python/3.12
-cd /scratch/user/$USER/mlip_phonons/phonons-mlip
-source .venv/bin/activate
-```
-
 ---
 
-#### 7. CHECKS
+#### 5. CHECKS
 
 Check that the package imports:
 
@@ -249,7 +207,7 @@ PY
 ## Configure
 Next step is to configure this such that it works for you. First you need to obtain the model file, for `mace-mpa-0-medium` i have suppied this as an example in `assets/models/mace/mace-mpa-0-medium.model`, as is the example fine tuned model: `assets/models/mace/ivac0_neb_ft.model`. Any models that you would like to test should be copied into `assets/models/<model_family>/<your_model_weight_file>`. The currently supported models are listed in config.yml in the 'models' dictionary. 
 
-If you wanted to add a model, then you will first have to resolve a way to obtain the ASE calculator object from that model file, and implement that workflow into `src/mlip_phonons/get_calc.py`. You will find though, that if this model is of the model families accomodataed by this script, it is very likely all you will have to do is:
+Generally, if you wanted to add a model, then you will first have to resolve a way to obtain the ASE calculator object from that model file, and implement that workflow into `src/mlip_phonons/get_calc.py`. You will find though, that if this model is of the model families accomodataed by this script, it is very likely all you will have to do is:
 
 * copy the model file into the correct family subfolder in `assets/models`, 
 * then add a new dictionary item for that specific model in `src/mlip_phonons/get_calc.model_build`
@@ -264,7 +222,6 @@ Edit `config.yml`:
 See `config.yml` for the expected structure of inputs.
 
 Model weights/checkpoints are expected under `assets/models/` 
-#TODO: possibly save the model files? either that or right a model file .md explaining the set up.
 
 ## NEB Quickstart (poscar_i/poscar_f + MLIP)
 
@@ -287,7 +244,7 @@ Useful overrides:
 - `--dft-neb-dat`: optional DFT reference `neb.dat` for comparisons.
 - `--n-images`: number of images (otherwise inferred or defaulted).
 
-Now if you want this to be even more efficient, you can prepare your `mlip-neb` command in config.yml by editting NEB defaults. Say i had the path to POSCAR_i, and path to POSCAR_f, say i wanted the results to be located in some obscure folder, that i wanted van-der-waals term correction on, that i wanted the endpoints to be relaxed by the MLIP, and that i want within-species remapping of the initial and final poscars, and that i wanted the final supplied MLIP MEP to be vasp loadable, then in config.yml, i would change NEB to: 
+Now if you want this to be even more efficient, you can prepare your `mlip-neb` command in config.yml by editting NEB defaults. Say i had the path to POSCAR_i, and path to POSCAR_f, say i wanted the results to be located in some obscure folder, that i wanted van-der-waals term correction on, that i wanted the endpoints to be relaxed by the MLIP, and that i want within-species remapping of the initial and final poscars, and that i wanted the final supplied MLIP MEP to be vasp loadable. then in config.yml, i would change NEB to: 
 
 ```text
 neb:
@@ -295,14 +252,14 @@ neb:
     model_name: mace-mpa-0-medium # the model
     results_root: /some/obscure/folder/resultsNEB # where you want the results
     models_root: assets/models # where to look for the model 
-    structures_dir: None # this is only really for a backup place to look.
+    structures_dir: None # this is only really for a backup place to look for poscar_i or poscar_f, or neb.dat when trying to compare with DFT 
 
     poscar_i: /path/to/POSCAR_i
     poscar_f: /path/to/POSCAR_f
 
-    dft_neb_dat: null
+    dft_neb_dat: null # the neb.dat path when wanting to compare model performance with DFT predictions.
     vasp_inputs_dir: /path/to/vasp_inputs 
-    relax_endpoints: true
+    relax_endpoints: true 
     remap_f_i: true
     include_vdw: true
     overwrite: false
@@ -412,6 +369,8 @@ The repository does two main kinds of implemented MLIP-vs-DFT benchmarking, plus
    - `E_freq_rel`
    - `X_mean` for coupling-subspace agreement
    - cluster-window metrics for near-degenerate eigenspaces
+
+   a more comprehensive description on what is computed WRT phonon-coupling is included in the src/phonon_coupling folder. 
 
    The final phonon-coupling ranking is sorted by lower `Score_mean`. Reports are written to `resultsPhonCoupling/phonon_coupling_report_<i>.txt`.
 

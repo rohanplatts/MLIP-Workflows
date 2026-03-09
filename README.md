@@ -21,7 +21,7 @@ python -m pip install -e .
 ```
 Mace_env is the conda environment suited to run this package for mace, orb and petmad models. If you would like to use other models, use the other .yml files supplied in `./env/`. 
 
-This allows vast acceleration of the D3 calculations: Before you run the mlip-neb pipeline, you set: 
+To utilise OpenMP's parallelisation, set the following environment variables before you run the mlip-neb pipeline: 
 
 ```bash
 export LD_PRELOAD="${CONDA_PREFIX}/lib/libgomp.so.1" 
@@ -30,7 +30,7 @@ export OMP_NUM_THREADS= <NUMBER OF CORES>
 export MKL_NUM_THREADS= <NUMBER OF CORES>
 export OPENBLAS_NUM_THREADS= <NUMBER OF CORES>
 ```
-i have found that for <NUMBER OF CORES> to be 12 or 16 that D3 works marvellously, yet i have not tested for much more than that. 
+i have found that for NUMBER OF CORES to be 12 or 16 that D3 works marvellously, yet i have not tested for much more than that. 
 
 If you do not need vdW/D3, you can disable it for NEB runs (or disable it in config.yml):
 

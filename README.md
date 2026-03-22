@@ -16,7 +16,7 @@ This package is for a) executing particular workflows on various MLIPs, and b) b
 Clone this repository:
 ```
 git clone https://github.com/rohanplatts/phonons-mlip.git
-cd phonons-mlip
+cd mlip-workflows
 ```
 
 Then identify the models you want to use by reading [ENVIRONMENTS.md](env/ENVIRONMENTS.md), and follow the environment install instructions. 

@@ -24,7 +24,7 @@ Then identify the models you want to use by reading [ENVIRONMENTS.md](env/ENVIRO
 
 > Note: If you intend to use D3 (vdw) term correction, you will need the d3 backend from the `dftd3-python` + `simple-dftd3` packages via **conda-forge**. This enables you to utilise OpenMP's parallelisation. If you want to do that, see [README.md](src/NEB/README.md).
 
-For a HPC install guide (slurm orirented) see [HPC_install.md](env\HPC_install.md)
+For a HPC install guide (slurm orirented) see [HPC_install.md](env/HPC_install.md)
 
 
 ## Configuration

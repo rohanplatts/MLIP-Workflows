@@ -59,17 +59,17 @@ neb:
     # can also be the actual folder the model is in, it is just left like this so that, in general, when you have several model families, 
     # one #does not need a crap tonne of conditionals for listing various models_root just to operate several #families of models)
 
-    structures_dir: assets/structures/NEB  # Fallback folder used to derive `poscar_i`, `poscar_f`, and `dft_neb_dat` when those paths are omitted.
+    structures_dir: assets/training_data/CsPbI3/I_vac_0  # Fallback folder used to derive `poscar_i`, `poscar_f`, and `dft_neb_dat` when those paths are omitted.
     poscar_i: assets/structures/NEB/POSCAR_i  # Initial endpoint structure; becomes image 0 after optional endpoint relaxation.
     poscar_f: assets/structures/NEB/POSCAR_f  # Final endpoint structure; can be atom-remapped before interpolation and optionally relaxed.
-    dft_neb_dat: assets/structures/NEB/neb.dat  # Optional DFT reference `neb.dat`; used to infer image count and later compare MLIP paths against DFT.
+    dft_neb_dat: assets/structures/I_vac_0/neb.dat # Optional DFT reference `neb.dat`; used to infer image count and later compare MLIP paths against DFT.
     vasp_inputs_dir: null  # Optional directory containing `INCAR`, `KPOINTS`, and `POTCAR` to copy into the exported `vasp_mlip_d3/` and `vasp_ci/` folders.
 
     # (i obviously cannot create the INCAR, KPOINTS, or POTCAR, it only creates the 00, 01, 02 etc subfolders with the image poscar within them)
 
     relax_endpoints: true  # If true, relax the two endpoint structures with the chosen calculator before building the interpolated NEB path.
-    remap_f_i: false  # If true, reorder the final endpoint within each species by Hungarian matching so atoms map more cleanly onto the initial endpoint.
-    include_vdw: true  # If true, use the dispersion-corrected calculator where available and run the extra MLIP+D3 refinement stage before climbing-image NEB.
+    remap_f_i: True  # If true, reorder the final endpoint within each species by Hungarian matching so atoms map more cleanly onto the initial endpoint.
+    include_vdw: True  # If true, use the dispersion-corrected calculator where available and run the extra MLIP+D3 refinement stage before climbing-image NEB.
     overwrite: false  # If true, reuse `results_root`; if false, keep old runs by writing to `results_root_1`, `results_root_2`, and so on.
     device: cuda  # Requested device string for the MLIP calculator; `cuda*` automatically falls back to CPU if CUDA is unavailable.
     dtype: float32  # Numeric precision string passed into the MLIP calculator factory.
@@ -89,7 +89,36 @@ neb:
     steps_ci: 1000  # Maximum FIRE steps for the final climbing-image NEB stage.
 
 # ════════════════════════════════════════════════════════════════════════
-# Model configuration. it is formatted as follows:
+# Model configuration. This is for benchmarking. I.e., if you ever want to run several models on a
+# particular workflow, like if you wanted to get the MEP across many models, then it is important that 
+# you append the list of models you want to analyse here, under the dictionary 'models', and include the environment name
+# under them that actually allows the running of that model. EG:
+
+# models:
+#  small-omat-0:
+#     environment: mace_env
+#  mace-omat-0-medium:
+#     environment: mace_env
+#  mace-matpes-pbe-omat-ft:
+#     environment: mace_env
+
+# Then you can run bash src/NEB/main_neb.bs (from repo root) and it will run the NEB workflow across each of the above models. This is great for comparison
+# as once you have the resultsNEB folder, you can then run: `mlip-neb --compare --results-root resultsNEB' and you will get a comparison 
+# on all of the computed metrics of each model's MEP calculation.
+
+# Suppose you wanted to do a similiar thing but for phonons. Then its the EXACT same thing as the above. If i ran
+# `bash main.bs' (from repo root) then I would obtain the phonon calculations across each of the 3 models in the above. 
+
+# Maybe you want to get the phonons for several materials using the same model. Then you would need to define the material 
+# appropriately in config (see below), but you would just set models to be (as an example): 
+
+#models: 
+# small-omat-0:
+#   environment: mace_env
+#   material: diamond
+# small-omat-0: 
+#   environment: mace_env
+#   material: H20
 
 #models:
 # <model_name>:
@@ -98,22 +127,46 @@ neb:
 #
 # <model_name> should be the same name as what is checked in get_calc.py.
 
+# whenever i am not using particular models i tend to just insert a 'models3' so that those models no longer fall under 
+# the dictionary 'models' and therefore wont be included in the run. 
+
 # ════════════════════════════════════════════════════════════════════════=
 
-models:
-
+models3:
   # fine tuned models
-  ivac0_neb_ft: # fine tuned from mace-mpa-0-medium.
+  ivac0_neb_ft_1: # fine tuned from mace-mpa-0-medium.
     environment: mace_env
     material: cbvn 
+  ivac0_neb_ft_compiled_1:
+    environment: mace_env 
+
+models:
+  neutral_lora_optuna_v2_trial017:
+    environment: mace_env
+    material: None
+  neutral_lora_optuna_v2_trial032:
+    environment: mace_env
+    material: None
+  
+models3: 
+
+  ivac0_neb_ft_2: # fine tuned from mace-mpa-0-medium.
+    environment: mace_env
+    material: cbvn 
+
+  mace-mpa-0-medium:
+    environment: mace_env
+    material: cbvn
+  
+
+
+models3:
   # MACE models
+
   small-omat-0:
     environment: mace_env
     material: cbvn
   mace-omat-0-medium:
-    environment: mace_env
-    material: cbvn
-  mace-mpa-0-medium:
     environment: mace_env
     material: cbvn
 

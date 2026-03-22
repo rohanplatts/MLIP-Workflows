@@ -23,6 +23,9 @@ load_model(path: 'str | Path', **kwargs)
 #get_calc_object("CHGNet-MatPES-PBE-2025.2.10-2.7M-PES")
 
 
+
+
+
 def _resolve_model_path(models_root: Path, *segments: str) -> Path:
     """Try backend-specific path first, then fall back to a flat model dir."""
     candidate = models_root.joinpath(*segments)
@@ -33,17 +36,22 @@ def _resolve_model_path(models_root: Path, *segments: str) -> Path:
         return fallback
     return candidate
 
+
+def _ensure_suffix(model_name: str, suffix: str) -> str:
+    """Return the on-disk filename for backends that store single-file weights."""
+    return model_name if model_name.endswith(suffix) else f"{model_name}{suffix}"
+
 def _mace_builder(model_rel: str) -> Callable[[Path, str, str], Any]:
     def _build(models_root: Path, device: str, dtype: str) -> Any:
         from mace.calculators import MACECalculator
-        model_path = _resolve_model_path(models_root, "mace", model_rel)
+        model_path = _resolve_model_path(models_root, "mace", _ensure_suffix(model_rel, ".model"))
         return MACECalculator(model_path=str(model_path), device=device, default_dtype=dtype)
     return _build
 
 def _mattersim_builder(model_rel: str) -> Callable[[Path, str, str], Any]:
     def _build(models_root: Path, device: str, dtype: str) -> Any:
         from mattersim.forcefield import MatterSimCalculator
-        model_path = _resolve_model_path(models_root, "mattersim", model_rel)
+        model_path = _resolve_model_path(models_root, "mattersim", _ensure_suffix(model_rel, ".pth"))
         return MatterSimCalculator(from_checkpoint=str(model_path), device=device)
     return _build
 
@@ -65,7 +73,7 @@ def _matgl_builder(model_dir: str) -> Callable[[Path, str, str], Any]:
 def _pet_builder(model_rel: str) -> Callable[[Path, str, str], Any]:
     def _build(models_root: Path, device: str, dtype: str) -> Any:
         from metatomic.torch.ase_calculator import MetatomicCalculator
-        model_path = _resolve_model_path(models_root, "petmad", "upet", model_rel)
+        model_path = _resolve_model_path(models_root, "petmad", "upet", _ensure_suffix(model_rel, ".pt"))
         return MetatomicCalculator(str(model_path), device=device, non_conservative=True)
     return _build
 
@@ -104,6 +112,7 @@ def _orb_builder(model_rel: str, precision: str) -> Callable[[Path, str, str], A
         if dtype == "float32": 
             dtype = "float32-high"
 
+        model_rel = _ensure_suffix(model_rel, ".ckpt")
         model_path = _resolve_model_path(models_root, "orb", model_rel)
         model_name = str(Path(model_rel).stem)
        
@@ -135,26 +144,35 @@ def _orb_builder(model_rel: str, precision: str) -> Callable[[Path, str, str], A
 
 
 model_build: Dict[str, Callable[[Path, str, str], Any]] = {
-    "small-omat-0": _mace_builder("mace-omat-0-small.model"),
-    "mace-omat-0-medium": _mace_builder("mace-omat-0-medium.model"),
-    "mace-mpa-0-medium": _mace_builder("mace-mpa-0-medium.model"),
-    "mace-matpes-pbe-omat-ft": _mace_builder("MACE-matpes-pbe-omat-ft.model"),
-    "mace-matpes-r2scan-omat-ft": _mace_builder("MACE-matpes-r2scan-omat-ft.model"),
-    "ivac0_neb_ft": _mace_builder("ivac0_neb_ft.model"),
+    "small-omat-0": _mace_builder("mace-omat-0-small"),
+    "mace-omat-0-medium": _mace_builder("mace-omat-0-medium"),
+    "mace-mpa-0-medium": _mace_builder("mace-mpa-0-medium"),
+    "mace-matpes-pbe-omat-ft": _mace_builder("MACE-matpes-pbe-omat-ft"),
+    "mace-matpes-r2scan-omat-ft": _mace_builder("MACE-matpes-r2scan-omat-ft"),
+    
+    "ivac0_neb_ft_1": _mace_builder("ivac0_neb_ft_1"),
+    "ivac0_neb_ft_compiled_1": _mace_builder("ivac0_neb_ft_compiled_1"),
 
-    "mattersim-v1.0.0-1M": _mattersim_builder("mattersim-v1.0.0-1M.pth"),
-    "mattersim-v1.0.0-5M": _mattersim_builder("mattersim-v1.0.0-5M.pth"),
+    "ivac0_neb_ft_2": _mace_builder("ivac0_neb_ft_1"),
+    "ivac0_neb_ft_compiled_2": _mace_builder("ivac0_neb_ft_compiled_1"),
 
-    "orb-v3-direct-inf-omat": _orb_builder("orb-v3-direct-inf-omat.ckpt", precision="float32-high"),
-    "orb-d3-sm-v2": _orb_builder("orb-d3-sm-v2.ckpt", precision="float64"),
-    "orb-v3-conservative-inf-omat": _orb_builder("orb-v3-conservative-inf-omat.ckpt", precision="float64"),
+    "ivac0_neb_ft_3": _mace_builder("ivac0_neb_ft_3"),
 
-    "pet-mad-s-v1.1.0": _pet_builder("pet-mad-s-v1.1.0.pt"),
-    "pet-omad-l-v0.1.0": _pet_builder("pet-omad-l-v0.1.0.pt"),
-    "pet-omad-s-v1.0.0": _pet_builder("pet-omad-s-v1.0.0.pt"),
-    "pet-omat-l-v1.0.0": _pet_builder("pet-omat-l-v1.0.0.pt"),
-    "pet-omat-m-v1.0.0": _pet_builder("pet-omat-m-v1.0.0.pt"),
-    "pet-omat-xl-v1.0.0": _pet_builder("pet-omat-xl-v1.0.0.pt"),
+    "neutral_lora_optuna_v2_trial032": _mace_builder("neutral_lora_optuna_v2_trial032"),
+
+    "mattersim-v1.0.0-1M": _mattersim_builder("mattersim-v1.0.0-1M"),
+    "mattersim-v1.0.0-5M": _mattersim_builder("mattersim-v1.0.0-5M"),
+
+    "orb-v3-direct-inf-omat": _orb_builder("orb-v3-direct-inf-omat", precision="float32-high"),
+    "orb-d3-sm-v2": _orb_builder("orb-d3-sm-v2", precision="float64"),
+    "orb-v3-conservative-inf-omat": _orb_builder("orb-v3-conservative-inf-omat", precision="float64"),
+
+    "pet-mad-s-v1.1.0": _pet_builder("pet-mad-s-v1.1.0"),
+    "pet-omad-l-v0.1.0": _pet_builder("pet-omad-l-v0.1.0"),
+    "pet-omad-s-v1.0.0": _pet_builder("pet-omad-s-v1.0.0"),
+    "pet-omat-l-v1.0.0": _pet_builder("pet-omat-l-v1.0.0"),
+    "pet-omat-m-v1.0.0": _pet_builder("pet-omat-m-v1.0.0"),
+    "pet-omat-xl-v1.0.0": _pet_builder("pet-omat-xl-v1.0.0"),
 
     "CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES": _matgl_builder("CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES"),
     "CHGNet-MatPES-PBE-2025.2.10-2.7M-PES": _matgl_builder("CHGNet-MatPES-PBE-2025.2.10-2.7M-PES"),
@@ -168,6 +186,41 @@ model_build: Dict[str, Callable[[Path, str, str], Any]] = {
     "TensorNetDGL-MatPES-PBE-v2025.1-PES": _matgl_builder("TensorNetDGL-MatPES-PBE-v2025.1-PES"),
     "TensorNetDGL-MatPES-r2SCAN-v2025.1-PES": _matgl_builder("TensorNetDGL-MatPES-r2SCAN-v2025.1-PES"),
 }
+
+subdir_model_build: Dict[str, Callable] = {
+    "mace": _mace_builder,
+    "mattersim": _mattersim_builder, 
+    "orb": _orb_builder,
+    "petmad": _pet_builder, 
+    "upet": _pet_builder,
+    "matgl": _matgl_builder,
+}
+
+
+def _find_builder(models_root: Path, model: str):
+    """
+    if the model is not explicitly known in the model_build dictionary, we attempt to identify 
+    the correrct builder based upon the name of subdirectory where the model is stored, as 
+    determined by subdir_model_build.
+
+    """
+    cand_model_path = next(models_root.glob(f'**/{model}.*'), None)
+    print(cand_model_path)
+    if not cand_model_path:
+        raise FileNotFoundError(f"Model '{model}' does not exist in provided models_root: '{models_root}'. ")
+    cand_model_subdir = cand_model_path.parent
+    if cand_model_subdir == models_root: 
+        raise ValueError(f"Model '{model}' was found to be in the base models_root. Cannot infer how to build the model, too much degeneracy.")
+    
+    cand_subdir_str = str(cand_model_subdir.name)
+    try: 
+        builder = subdir_model_build[cand_subdir_str]
+        return builder
+    except KeyError:
+        raise KeyError(f"Subdirectory '{cand_model_subdir}' in '{models_root}' is not tied to a builder via the dictionary 'subdir_model_build' in <repo_root>/src/mlip_phonons/get_calc.py.")
+
+    
+
 
 def get_calc_object(
     model: str,
@@ -183,13 +236,20 @@ def get_calc_object(
     vdw_realspace_cutoff: dict[str, float] | None = None,
     vdw_cache_api: bool = True,
 ) -> Any:
-    models_root = Path(models_root) if models_root is not None else Path("assets") / "models"
+    models_root = Path(models_root) if models_root is not None else Path(__file__).resolve().parents[2] / Path("assets") / "models"
+
     try:
         calc = model_build[model](models_root, device, dtype)
     except KeyError:
-        raise ValueError(f"Unknown model '{model}'")
+        print(f"WARNING: Unknown model '{model}' — It does not have a defined and dedicated builder to it",
+              "in the dictionary 'model_build' in 'src/mlip_phonons/get_calc.py'.",
+              f"INSTEAD i will attempt to infer model build by finding the first subdirectory location in '{models_root}'",
+              "containing the model name.")
+        builder = _find_builder(models_root, model)
+        calc = builder(model)(models_root, device, dtype)
 
     has_builtin_dispersion = ("orb-d3" in model.lower())
+
     if include_vdw and not has_builtin_dispersion:
         from ase.calculators.mixing import SumCalculator
         from dftd3.ase import DFTD3

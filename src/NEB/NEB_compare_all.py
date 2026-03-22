@@ -122,6 +122,25 @@ def load_dft_neb_dat(path: Path) -> tuple[np.ndarray, np.ndarray]:
     return data[:, 1].astype(float), data[:, 2].astype(float)
 
 
+def _energy_profile_rmse(
+    *,
+    dft_s: np.ndarray,
+    dft_e: np.ndarray,
+    mlip_s: np.ndarray,
+    mlip_e: np.ndarray,
+) -> float:
+    dft_order = np.argsort(dft_s)
+    mlip_order = np.argsort(mlip_s)
+    dft_s_sorted = np.asarray(dft_s, dtype=float)[dft_order]
+    dft_e_sorted = np.asarray(dft_e, dtype=float)[dft_order]
+    mlip_s_sorted = np.asarray(mlip_s, dtype=float)[mlip_order]
+    mlip_e_sorted = np.asarray(mlip_e, dtype=float)[mlip_order]
+
+    mlip_interp = np.interp(dft_s_sorted, mlip_s_sorted, mlip_e_sorted)
+    diff = mlip_interp - dft_e_sorted
+    return float(np.sqrt(np.mean(diff * diff)))
+
+
 def _force_error_metrics(
     *,
     model_name: str,
@@ -294,7 +313,50 @@ def plot_compare(
         "mlip_deltaE_eV": float(mlip_e[-1]),
         "dft_barrier_eV": float(np.max(dft_e)),
         "dft_deltaE_eV": float(dft_e[-1]),
+        "energy_RMSE_eV": _energy_profile_rmse(
+            dft_s=dft_s,
+            dft_e=dft_e,
+            mlip_s=mlip_s,
+            mlip_e=mlip_e,
+        ),
     }
+
+
+def _weighted_rank_metric(
+    metrics: dict[str, Any],
+    *,
+    a: float,
+    b: float,
+    c: float,
+) -> float | None:
+    score = 0.0
+    for weight, key in (
+        (a, "barrier_abs_err_eV"),
+        (b, "energy_RMSE_eV"),
+        (c, "force_RMSE_eV_per_A"),
+    ):
+        if weight == 0.0:
+            continue
+        value = metrics.get(key)
+        if value is None:
+            return None
+        score += float(weight) * float(value)
+    return float(score)
+
+
+def _ranking_sort_key(metrics: dict[str, Any]) -> tuple[bool, float, float, float, float, str]:
+    ranking_metric = metrics.get("ranking_metric")
+    barrier_abs_err = metrics.get("barrier_abs_err_eV")
+    energy_rmse = metrics.get("energy_RMSE_eV")
+    force_rmse = metrics.get("force_RMSE_eV_per_A")
+    return (
+        ranking_metric is None,
+        float("inf") if ranking_metric is None else float(ranking_metric),
+        float("inf") if barrier_abs_err is None else float(barrier_abs_err),
+        float("inf") if energy_rmse is None else float(energy_rmse),
+        float("inf") if force_rmse is None else float(force_rmse),
+        str(metrics.get("model", "")),
+    )
 
 
 def main(argv: list[str] | None = None, *, repo_root: Path | None = None) -> int:
@@ -341,6 +403,24 @@ def main(argv: list[str] | None = None, *, repo_root: Path | None = None) -> int
         action=argparse.BooleanOptionalAction,
         default=default_include_vdw,
         help="Whether to include D3 corrections when evaluating MLIP forces.",
+    )
+    parser.add_argument(
+        "--rank-weight-barrier",
+        type=float,
+        default=1.0,
+        help="Weight a for barrier_abs_err_eV in ranking_metric.",
+    )
+    parser.add_argument(
+        "--rank-weight-energy-rmse",
+        type=float,
+        default=1.0,
+        help="Weight b for energy_RMSE_eV in ranking_metric.",
+    )
+    parser.add_argument(
+        "--rank-weight-force-rmse",
+        type=float,
+        default=1.0,
+        help="Weight c for force_RMSE_eV_per_A in ranking_metric.",
     )
     args = parser.parse_args(argv)
 
@@ -452,14 +532,21 @@ def main(argv: list[str] | None = None, *, repo_root: Path | None = None) -> int
             all_metrics.append(yaml.safe_load(metrics_path.read_text(encoding="utf-8")))
 
     if all_metrics:
+        rank_a = float(args.rank_weight_barrier)
+        rank_b = float(args.rank_weight_energy_rmse)
+        rank_c = float(args.rank_weight_force_rmse)
+
         for m in all_metrics:
             m["barrier_abs_err_eV"] = abs(m["mlip_barrier_eV"] - m["dft_barrier_eV"])
             m["deltaE_abs_err_eV"] = abs(m["mlip_deltaE_eV"] - m["dft_deltaE_eV"])
+            m["ranking_metric"] = _weighted_rank_metric(
+                m,
+                a=rank_a,
+                b=rank_b,
+                c=rank_c,
+            )
 
-        ranked = sorted(
-            all_metrics,
-            key=lambda m: (m["barrier_abs_err_eV"], m["deltaE_abs_err_eV"]),
-        )
+        ranked = sorted(all_metrics, key=_ranking_sort_key)
 
         rankings_dir = nebresults_root / "rankings"
         rankings_dir.mkdir(parents=True, exist_ok=True)
@@ -472,12 +559,17 @@ def main(argv: list[str] | None = None, *, repo_root: Path | None = None) -> int
             return str(value)
 
         lines: list[str] = []
-        lines.append("FINAL RANKING (lower barrier_abs_err_eV is better)\n")
-        lines.append("Sorted by barrier_abs_err_eV, then deltaE_abs_err_eV.\n\n")
+        lines.append("FINAL RANKING (lower ranking_metric is better)\n")
+        lines.append("Sorted by ranking_metric, then barrier_abs_err_eV, energy_RMSE_eV, and force_RMSE_eV_per_A.\n")
+        lines.append("ranking_metric = a*barrier_abs_err_eV + b*energy_RMSE_eV + c*force_RMSE_eV_per_A\n")
+        lines.append(f"a = {rank_a:.6f}, b = {rank_b:.6f}, c = {rank_c:.6f}\n")
+        lines.append("If any non-zero-weight term is missing, ranking_metric = NA and that model is sorted last.\n\n")
         columns = [
+            ("ranking_metric", "right"),
             ("rank", "right"),
             ("model", "left"),
             ("barrier_abs_err_eV", "right"),
+            ("energy_RMSE_eV", "right"),
             ("deltaE_abs_err_eV", "right"),
             ("mlip_barrier_eV", "right"),
             ("dft_barrier_eV", "right"),
@@ -496,9 +588,11 @@ def main(argv: list[str] | None = None, *, repo_root: Path | None = None) -> int
         for i, m in enumerate(ranked, start=1):
             rows.append(
                 [
+                    _fmt_opt(m.get("ranking_metric")),
                     str(i),
                     str(m["model"]),
                     f"{m['barrier_abs_err_eV']:.6f}",
+                    _fmt_opt(m.get("energy_RMSE_eV")),
                     f"{m['deltaE_abs_err_eV']:.6f}",
                     f"{m['mlip_barrier_eV']:.6f}",
                     f"{m['dft_barrier_eV']:.6f}",

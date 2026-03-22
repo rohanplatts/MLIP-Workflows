@@ -134,5 +134,22 @@ Optional metrics:
 
 ## Notes
 
-- `src/NEB/run_neb_raw_OLD.py` is legacy; `run_neb_raw_v2.py` is the maintained entrypoint.
-- `src/NEB/checking_neb.py` is a small utility to remap endpoints and print basic displacement metrics (useful to check if the indices of an initial and final configuration are correctly matched)
+### VDW USAGE:
+
+To benefit from OPENMP's parrallelisation, in the terminal that you use to run your NEB workflow, set the following environment variables:
+
+```bash
+export LD_PRELOAD="${CONDA_PREFIX}/lib/libgomp.so.1" 
+
+export OMP_NUM_THREADS= <NUMBER OF CORES>
+export MKL_NUM_THREADS= <NUMBER OF CORES>
+export OPENBLAS_NUM_THREADS= <NUMBER OF CORES>
+```
+i have found that for NUMBER OF CORES to be 12 or 16 that D3 works marvellously, yet i have not tested for much more than that. 
+
+If you do not need vdW/D3, you can disable it for NEB runs (or disable it in config.yml):
+
+```bash
+mlip-neb --no-include-vdw
+```
+
